@@ -38,6 +38,13 @@ venv.bak/
 .project
 .pydevproject
 .settings/
+.cursor/
+.cursor-cache/
+.cursor.sync
+.cursor.config.json
+.cursor.project.json
+.cursor.editor.json
+.cursor.prompt
 
 # Logs and databases
 *.log

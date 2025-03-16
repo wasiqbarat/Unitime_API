@@ -1,0 +1,82 @@
+Solution info: [
+    Assigned variables: 100.00% (2/2)
+    Distribution preferences: 100.00% (0.00)
+    Iteration: 2
+    Memory usage: 7.35M
+    Overall solution value: 0.00
+    Room preferences: 100.00% (0)
+    Same subpart balancing penalty: 0.00
+    Speed: 312.99 it/s
+    Student conflicts: 0 [committed:0, distance:0, hard:0]
+    Time: 0.00 min
+    Time preferences: 100.00% (0.00)
+    Too big rooms: 0.00% (0)
+    Useless half-hours: 0.00% (0 + 0)
+  ]
+Bounds: [
+    Distribution preferences max: 0.0
+    Distribution preferences min: 0.0
+    Room preferences max: 0.0
+    Room preferences min: 0.0
+    Time preferences max: 0.0
+    Time preferences min: 0.0
+    Too big rooms max: 8.0
+    Useless half-hours: 1200.0
+  ]
+Room info:
+id, name, size, used_day, used_total
+1,100,100,6,6
+2,101,80,6,6
+Class info:
+id, name, min_class_limit, max_class_limit, room2limit_ratio, half_hours
+1,Class 1,50,50,1.0,6
+2,Class 2,40,40,1.0,6
+Total number of classes: 2
+Total number of instructional offerings: 0 (0.000%)
+Total number of configurations: 0 (0.000%)
+Total number of scheduling subparts: 1 (50.000%)
+Average number classes per subpart: 2.000
+Average number classes per config: ?
+Average number classes per offering: ?
+Total number of classes with only one value: 0 (0.000%)
+Total number of classes with only one time: 0 (0.000%)
+Total number of classes with only one room: 0 (0.000%)
+Total number of classes requesting no room: 0 (0.000%)
+Total number of classes requesting one room: 2 (100.000%)
+Total number of classes requesting one or more rooms: 2 (100.000%)
+Average number of requested rooms: 1.000
+Average minimal class limit: 45.000
+Average maximal class limit: 45.000
+Average number of placements: 6.000
+Average number of time locations: 3.000
+Average number of room locations: 2.000
+Average minimal requested room size: 80.000
+Average maximal requested room size: 100.000
+Average requested room sizes: 90.000
+Average maximum normalized time preference: 0.000
+Average minimum normalized time preference: 0.000
+Average normalized time preference,0.000
+Average maximum room preferences: 0.000
+Average minimum room preferences: 0.000
+Average room preferences,0.000
+Total number of students:0
+Total amount of student enrollments: 0
+Total amount of joined enrollments: 0
+Average number of students: 0.000
+Average number of enrollemnts (per student): NaN
+Total amount of inevitable student conflicts: 0 (NaN%)
+Average number of meetings (per class): 1.000
+Average number of hours per class: 0.500
+Total number of rooms: 2
+Minimal room size: 80
+Maximal room size: 100
+Average room size: 90.000
+Maximal distance between two rooms: 0.000
+Average distance between two rooms: NaN
+Average hours available: 50.000
+Total number of instructors: 0
+Total class-instructor assignments: 0 (0.000%)
+Average classes per instructor: NaN
+Total number of group constraints: 0 (0.000%)
+Total number of hard group constraints: 0 (0.000%)
+Average classes per group constraint: NaN

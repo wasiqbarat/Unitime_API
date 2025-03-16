@@ -1,0 +1,42 @@
+﻿<?xml version="1.0" encoding="UTF-8"?>
+<timetable term="Fall" year="2023" campus="Sample">
+  <rooms>
+    <room id="1" building="1" capacity="100" name="100"/>
+    <room id="2" building="1" capacity="80" name="101"/>
+  </rooms>
+  <classes>
+    <class id="1" name="Class 1" expectedCapacity="50" roomCapacity="50" nrRooms="1">
+      <time days="01" start="90" length="6" pref="0"/>
+      <time days="10" start="90" length="6" pref="0"/>
+      <time days="100" start="90" length="6" pref="0"/>
+      <room id="1" pref="0"/>
+      <room id="2" pref="0"/>
+    </class>
+    <class id="2" name="Class 2" expectedCapacity="40" roomCapacity="40" nrRooms="1">
+      <time days="01" start="90" length="6" pref="0"/>
+      <time days="10" start="90" length="6" pref="0"/>
+      <time days="100" start="90" length="6" pref="0"/>
+      <room id="1" pref="0"/>
+      <room id="2" pref="0"/>
+    </class>
+  </classes>
+  <groupConstraints></groupConstraints>
+  <distributions></distributions>
+  <departments></departments>
+  <subjects></subjects>
+  <offerings></offerings>
+  <instructors></instructors>
+  <buildings>
+    <building id="1" abbreviation="MAIN" name="Main Building" />
+  </buildings>
+  <students>
+    <student id="1" first_name="Test" last_name="Student">
+      <course id="1"/>
+      <course id="2"/>
+    </student>
+  </students>
+  <solutions>
+    <solution commit="true" update="true" save="true"/> 
+  </solutions>
+</timetable>
+

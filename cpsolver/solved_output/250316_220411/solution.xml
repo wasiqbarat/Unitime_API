@@ -1,0 +1,45 @@
+<?xml version="1.0" encoding="UTF-8"?>
+
+<!--University Course Timetabling-->
+<!--Solution Info:
+    Assigned variables: 100.00% (2/2)
+    Best Iteration: 2
+    Best Time: 0.00 min (312.99 it/s)
+    Distribution preferences: 100.00% (0.00)
+    Iteration: 2
+    Memory usage: 8.35M
+    Overall solution value: 0.00
+    Room preferences: 100.00% (0)
+    Same subpart balancing penalty: 0.00
+    Speed: 312.99 it/s
+    Student conflicts: 0 [committed:0, distance:0, hard:0]
+    Time: 0.00 min
+    Time preferences: 100.00% (0.00)
+    Too big rooms: 0.00% (0)
+    Useless half-hours: 0.00% (0 + 0)
+-->
+<timetable version="2.5" term="Fall" year="2023" created="Sun Mar 16 22:04:12 AFT 2025" nrDays="7" slotsPerDay="288">
+  <rooms>
+    <room id="1" constraint="true" building="1" capacity="100"/>
+    <room id="2" constraint="true" building="1" capacity="80"/>
+  </rooms>
+  <classes>
+    <class id="1" committed="false" subpart="-1" classLimit="50" dates="11">
+      <room id="1" pref="0"/>
+      <room id="2" pref="0" solution="true" best="true"/>
+      <time days="۰۰۰۰۰۰۱" start="90" length="6" breakTime="10" pref="0.0"/>
+      <time days="۰۰۰۰۰۱۰" start="90" length="6" breakTime="10" pref="0.0"/>
+      <time days="۰۰۰۰۱۰۰" start="90" length="6" breakTime="10" pref="0.0" solution="true" best="true"/>
+    </class>
+    <class id="2" committed="false" subpart="-1" classLimit="40" dates="11">
+      <room id="1" pref="0" solution="true" best="true"/>
+      <room id="2" pref="0"/>
+      <time days="۰۰۰۰۰۰۱" start="90" length="6" breakTime="10" pref="0.0"/>
+      <time days="۰۰۰۰۰۱۰" start="90" length="6" breakTime="10" pref="0.0"/>
+      <time days="۰۰۰۰۱۰۰" start="90" length="6" breakTime="10" pref="0.0" solution="true" best="true"/>
+    </class>
+  </classes>
+  <groupConstraints/>
+  <students/>
+  <groups/>
+</timetable>

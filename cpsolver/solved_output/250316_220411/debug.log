@@ -1,0 +1,59 @@
+16-Mar-25 22:04:11.985 [main] INFO  util.Progress> [Restoring from backup ...]
+16-Mar-25 22:04:12.005 [main] INFO  util.Progress> Model successfully loaded.
+16-Mar-25 22:04:12.005 [Solver] INFO  util.Progress> [Solving problem ...]
+16-Mar-25 22:04:12.005 [Solver] INFO  solver.Solver> Using org.cpsolver.ifs.termination.GeneralTerminationCondition
+16-Mar-25 22:04:12.005 [Solver] INFO  solver.Solver> Using org.cpsolver.ifs.solution.GeneralSolutionComparator
+16-Mar-25 22:04:12.005 [Solver] INFO  solver.Solver> Using org.cpsolver.ifs.heuristics.StandardNeighbourSelection
+16-Mar-25 22:04:12.005 [Solver] INFO  heuristics.StandardNeighbourSelection> Using org.cpsolver.ifs.heuristics.GeneralValueSelection
+16-Mar-25 22:04:12.005 [Solver] INFO  heuristics.StandardNeighbourSelection> Using org.cpsolver.ifs.heuristics.GeneralVariableSelection
+16-Mar-25 22:04:12.012 [Solver] INFO  solver.Solver> Using org.cpsolver.ifs.perturbations.DefaultPerturbationsCounter
+16-Mar-25 22:04:12.012 [Solver] INFO  util.JProf> Using wall time.
+16-Mar-25 22:04:12.016 [Solver] INFO  solver.Solver> Initial solution:[
+    Assigned variables: 0.00% (0/2)
+    Distribution preferences: 100.00% (0.00)
+    Iteration: 0
+    Memory usage: 5.69M
+    Overall solution value: 0.00
+    Room preferences: 100.00% (0)
+    Same subpart balancing penalty: 0.00
+    Student conflicts: 0 [committed:0, distance:0, hard:0]
+    Time: 0.00 min
+    Time preferences: 100.00% (0.00)
+    Too big rooms: 0.00% (0)
+    Useless half-hours: 0.00% (0 + 0)
+  ]
+16-Mar-25 22:04:12.020 [Solver] INFO  coursett.Test> **BEST[2]** T:0.00
+16-Mar-25 22:04:12.020 [Solver] INFO  termination.GeneralTerminationCondition> Complete solution found.
+16-Mar-25 22:04:12.020 [Solver] INFO  util.Progress> [Solver done.]
+16-Mar-25 22:04:12.026 [ShutdownHook] INFO  coursett.Test> Last solution: [
+    Assigned variables: 100.00% (2/2)
+    Best Iteration: 2
+    Best Time: 0.00 min (312.99 it/s)
+    Distribution preferences: 100.00% (0.00)
+    Iteration: 2
+    Memory usage: 7.19M
+    Overall solution value: 0.00
+    Room preferences: 100.00% (0)
+    Same subpart balancing penalty: 0.00
+    Speed: 312.99 it/s
+    Student conflicts: 0 [committed:0, distance:0, hard:0]
+    Time: 0.00 min
+    Time preferences: 100.00% (0.00)
+    Too big rooms: 0.00% (0)
+    Useless half-hours: 0.00% (0 + 0)
+  ]
+16-Mar-25 22:04:12.026 [ShutdownHook] INFO  coursett.Test> Best solution (before restore): [
+    Assigned variables: 100.00% (2/2)
+    Distribution preferences: 100.00% (0.00)
+    Iteration: 2
+    Memory usage: 6.03M
+    Overall solution value: 0.00
+    Room preferences: 100.00% (0)
+    Same subpart balancing penalty: 0.00
+    Speed: 312.99 it/s
+    Student conflicts: 0 [committed:0, distance:0, hard:0]
+    Time: 0.00 min
+    Time preferences: 100.00% (0.00)
+    Too big rooms: 0.00% (0)
+    Useless half-hours: 0.00% (0 + 0)
+  ]

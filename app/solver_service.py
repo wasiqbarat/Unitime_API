@@ -54,7 +54,7 @@ class SolverService:
         
         The command runs:
         java -Xmx512m -cp "cpsolver-1.4.74.jar;lib/log4j-api-2.20.0.jar;lib/log4j-core-2.20.0.jar;lib/dom4j-2.1.4.jar" 
-        org.cpsolver.coursett.Test config.cfg data.xml solved_output/
+        org.cpsolver.coursett.Test config.cfg input/problem.xml solved_output/
         
         Returns:
             Dict containing status of the solver run and any output
@@ -90,7 +90,7 @@ class SolverService:
                 "java", "-Xmx512m", 
                 "-cp", classpath,
                 "org.cpsolver.coursett.Test", 
-                "config.cfg", "data.xml", "solved_output/"
+                "config.cfg", "input/problem.xml", "solved_output/"
             ]
             
             # Log the command for debugging

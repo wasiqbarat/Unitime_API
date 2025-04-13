@@ -64,7 +64,7 @@ def main():
         "lib/log4j-core-2.20.0.jar",
         "lib/dom4j-2.1.4.jar",
         "config.cfg",
-        "data.xml"
+        "input/problem.xml"
     ]
     
     missing_files = []

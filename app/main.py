@@ -2,9 +2,9 @@ from fastapi import FastAPI, Depends, HTTPException
 from fastapi.middleware.cors import CORSMiddleware
 import logging
 import os
-from pathlib import Path
+from pathlib import Path 
 
-from .solver_service import SolverService
+from .solver_service import SolverService 
 
 # Configure logging
 logging.basicConfig(

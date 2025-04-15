@@ -1,525 +1,474 @@
 #!/usr/bin/env python3
 """
-JSON to XML Converter for Timetabling Problem
+JSON to XML Converter for University Course Timetabling
 
-This script converts a minimal JSON timetabling problem definition to the XML format
-required by the UniTime CPSolver for course timetabling.
-
-Usage:
-    python json_to_xml_converter.py input.json output.xml
-
+This script converts a JSON input format for university course timetabling
+to the XML format required by the Cpsolver library.
 """
 
 import json
 import xml.dom.minidom as minidom
 import xml.etree.ElementTree as ET
-import sys
 import datetime
 import argparse
+import sys
 import re
+from typing import Dict, List, Any, Tuple, Optional
 
-def create_element(parent, tag, text=None, **attrs):
-    """Helper function to create an XML element with attributes and text."""
-    element = ET.SubElement(parent, tag, **attrs)
-    if text is not None:
-        element.text = str(text)
-    return element
-
-def format_days_string(days_list):
-    """Convert a list of days to a binary string representation.
-    
-    Example: ["Monday", "Wednesday", "Friday"] -> "1010100"
+class JSONtoXMLConverter:
     """
-    day_mapping = {
-        "monday": 0,
-        "tuesday": 1,
-        "wednesday": 2,
-        "thursday": 3,
-        "friday": 4,
-        "saturday": 5,
-        "sunday": 6
-    }
-    
-    days_binary = ['0'] * 7
-    for day in days_list:
-        day_lower = day.lower()
-        if day_lower in day_mapping:
-            days_binary[day_mapping[day_lower]] = '1'
-    
-    return ''.join(days_binary)
-
-def time_to_slots(time_str):
-    """Convert a time string (HH:MM) to slot number.
-    
-    With 288 slots per day (5-minute slots), each hour has 12 slots.
+    Converter class for transforming JSON timetabling data to XML format
+    compatible with Cpsolver library.
     """
-    hours, minutes = map(int, time_str.split(':'))
-    # Calculate minutes since midnight
-    minutes_since_midnight = hours * 60 + minutes
-    # Convert to slot number (assuming 5-minute slots)
-    slot = minutes_since_midnight // 5
-    return slot
-
-def convert_json_to_xml(json_data):
-    """Convert JSON timetabling data to XML format for UniTime CPSolver."""
     
-    # Create ID mappings for all entity types
-    # Use index+1 as numeric ID (ensuring no zeros)
-    room_id_mapping = {}
-    for i, room_data in enumerate(json_data.get("rooms", [])):
-        room_id_mapping[room_data["id"]] = str(i+1)
-    
-    instructor_id_mapping = {}
-    for i, instructor_data in enumerate(json_data.get("instructors", [])):
-        instructor_id_mapping[instructor_data["id"]] = str(i+1)
-    
-    # Also map any instructors mentioned in classes but not in instructors section
-    instructor_names = set()
-    for class_data in json_data.get("classes", []):
-        if "instructor" in class_data:
-            instructor_names.add(class_data["instructor"])
-    
-    # Add any missing instructors to the mapping
-    for i, instructor_name in enumerate(instructor_names):
-        if instructor_name not in instructor_id_mapping:
-            instructor_id_mapping[instructor_name] = str(i+101)
-    
-    class_id_mapping = {}
-    for i, class_data in enumerate(json_data.get("classes", [])):
-        class_id_mapping[class_data["id"]] = str(i+1)
-    
-    # Create root element
-    root = ET.Element("timetable")
-    root.set("version", "2.4")
-    root.set("campus", "CAMPUS")
-    root.set("term", "1")
-    root.set("year", "2023")
-    root.set("created", datetime.datetime.now().strftime("%Y-%m-%d %H:%M:%S"))
-    root.set("nrDays", "5")
-    root.set("slotsPerDay", "288")
-    root.set("type", "course")  # Required field
-    root.set("studWeights", "false")  # Required field
-    root.set("instrWeights", "false")  # Required field
-    root.set("diffRoomWeights", "false")  # Required field
-    root.set("diffTimeWeights", "false")  # Required field
-    root.set("longerWeights", "false")  # Required field
-    root.set("deptBalancing", "false")  # Required field
-    root.set("perturbations", "false")  # Required field
-    
-    # Process travel times (required element with entries)
-    travel_times_element = create_element(root, "traveltimes")
-    # Add a default travel time to ensure element isn't empty
-    create_element(travel_times_element, "travel", fromBldId="1", toBldId="1", time="0")
-    
-    # Process instructors section
-    instructors_element = create_element(root, "instructors")
-    for i, instructor_data in enumerate(json_data.get("instructors", [])):
-        instructor_id = instructor_id_mapping[instructor_data["id"]]
-        create_element(instructors_element, "instructor", 
-                       id=instructor_id, 
-                       externalId=instructor_data["id"],
-                       name=instructor_data.get("name", f"Instructor {instructor_id}"))
-    
-    # Add any missing instructors from classes
-    for instructor_name in instructor_names:
-        if instructor_name not in instructor_id_mapping:
-            continue
-        instructor_id = instructor_id_mapping[instructor_name]
-        create_element(instructors_element, "instructor", 
-                      id=instructor_id, 
-                      externalId=instructor_name,
-                      name=instructor_name)
-    
-    # Process rooms
-    rooms_element = create_element(root, "rooms")
-    for room_data in json_data.get("rooms", []):
-        room_id = room_id_mapping[room_data["id"]]
-        create_element(rooms_element, "room", 
-                      id=room_id, 
-                      externalId=room_data["id"],
-                      capacity=str(room_data["capacity"]),
-                      building="1",
-                      constraint="1")
-    
-    # Add departments section
-    departments_element = create_element(root, "departments")
-    create_element(departments_element, "department", 
-                  id="1", 
-                  externalId="DEPT1",
-                  name="Department 1",
-                  deptCode="DEPT1")
-    
-    # Add instructional types section (required by solver)
-    itypes_element = create_element(root, "instructionalTypes")
-    create_element(itypes_element, "instructionalType", 
-                  id="1", 
-                  reference="Lec", 
-                  name="Lecture",
-                  abbreviation="Lec", 
-                  type="normal",
-                  organized="true")
-    
-    create_element(itypes_element, "instructionalType", 
-                  id="2", 
-                  reference="Rec", 
-                  name="Recitation",
-                  abbreviation="Rec", 
-                  type="normal",
-                  organized="true")
-    
-    # Add subjects section
-    subjects_element = create_element(root, "subjects")
-    create_element(subjects_element, "subject", 
-                  id="1", 
-                  externalId="SUBJ1",
-                  name="Subject 1")
-    
-    # Add academic areas section (required by solver)
-    academic_areas = create_element(root, "academicAreas")
-    create_element(academic_areas, "academicArea", id="1", abbv="COMP", name="Computer Science")
-    
-    # Add position majors section (required by solver)
-    pos_majors = create_element(root, "posMajors")
-    create_element(pos_majors, "posMajor", id="1", code="CS", name="Computer Science", academicAreaId="1")
-    
-    # Add student groups section (required by solver)
-    student_groups = create_element(root, "studentGroups")
-    create_element(student_groups, "studentGroup", id="1", code="CSG", name="CS Group", type="MAJOR")
-    
-    # Add date patterns section (required by solver)
-    date_patterns = create_element(root, "datePatterns")
-    create_element(date_patterns, "datePattern", 
-                  id="1", 
-                  name="Full Term", 
-                  pattern="111111111111111", 
-                  type="Standard",
-                  visible="true")
-    
-    # Add offerings section (with config and subpart)
-    offerings_element = create_element(root, "offerings")
-    
-    # Group classes by course (if available)
-    courses = {}
-    for class_data in json_data.get("classes", []):
-        course = class_data.get("course", "DEFAULT")
-        if course not in courses:
-            courses[course] = []
-        courses[course].append(class_data)
-    
-    # Create offerings for each course
-    for i, (course, classes) in enumerate(courses.items()):
-        offering_id = str(i+1)
-        offering_element = create_element(offerings_element, "offering", 
-                                         id=offering_id, 
-                                         name=course)
+    def __init__(self, json_data: Dict[str, Any]):
+        """
+        Initialize the converter with JSON data.
         
-        # Add course element (required by solver)
-        course_element = create_element(offering_element, "course", 
-                                      id=offering_id,
-                                      courseNbr=f"COURSE{offering_id}",
-                                      subjectId="1",
-                                      title=course,
-                                      schedBookOnly="false")
+        Args:
+            json_data: Dictionary containing the JSON data
+        """
+        self.json_data = json_data
+        self.root = None
+        self.day_map = {
+            "Saturday": 0,
+            "Sunday": 1,
+            "Monday": 2,
+            "Tuesday": 3,
+            "Wednesday": 4,
+            "Thursday": 5,
+            "Friday": 6
+        }
         
-        # Add courseCredit element (required by solver)
-        course_credit = create_element(course_element, "courseCredit", 
-                                     creditType="standard",
-                                     creditUnitType="units",
-                                     creditFormat="fixedUnit",
-                                     fixedCredit="3")
+        # Default location for rooms if not specified
+        self.default_location = "450,450"
         
-        # Add config for this offering
-        config_element = create_element(offering_element, "config", 
-                                       id=offering_id, 
-                                       name=f"Config {offering_id}",
-                                       limit="100")
+        # Counter for constraint IDs
+        self.constraint_id_counter = 1
         
-        # Add subpart for lectures (required structure)
-        subpart_element = create_element(config_element, "subpart", 
-                                        id=offering_id, 
-                                        itype="1",
-                                        name="Lecture", 
-                                        type="lec",
-                                        suffix="Lec",
-                                        minPerWeek="150")
+        # ID mapping for non-numeric IDs
+        self.id_mapping = {}
+        self.next_numeric_id = 1000  # Starting ID for replacement
         
-        # Add itype reference (required by solver)
-        create_element(subpart_element, "itype", id="1", name="Lecture", abbreviation="Lec")
+    def ensure_numeric_id(self, id_value):
+        """
+        Ensure that the ID is numeric.
         
-        # Add sections for each class
-        for j, class_data in enumerate(classes):
-            class_id = class_id_mapping[class_data["id"]]
-            section_id = f"{offering_id}{j+1}"
-            create_element(subpart_element, "section", 
-                          id=section_id, 
-                          name=f"Section {section_id}",
-                          limit=str(class_data.get("students", 30)),
-                          classId=class_id,
-                          scheduleNote="auto-generated")
-    
-    # Add time patterns section
-    time_patterns_element = create_element(root, "timePatterns")
-    
-    # Add default time patterns
-    create_element(time_patterns_element, "timePattern",
-                  id="1",
-                  name="1h MWF",
-                  nrMeetings="3",
-                  minsPerMeeting="50",
-                  days="1010100",
-                  slotsPerMeeting="10",
-                  breakTime="0",
-                  times="90,102,114,126,138,150,162,174,186,198,210")
-    
-    create_element(time_patterns_element, "timePattern",
-                  id="2",
-                  name="1.5h TTh",
-                  nrMeetings="2",
-                  minsPerMeeting="75",
-                  days="0101000",
-                  slotsPerMeeting="15",
-                  breakTime="0",
-                  times="90,102,114,126,138,150,162,174,186,198,210")
-    
-    # Process classes
-    classes_element = create_element(root, "classes")
-    for class_data in json_data.get("classes", []):
-        class_id = class_id_mapping[class_data["id"]]
-        
-        # Find which offering and subpart this class belongs to
-        course = class_data.get("course", "DEFAULT")
-        offering_id = None
-        for i, (c, _) in enumerate(courses.items()):
-            if c == course:
-                offering_id = str(i+1)
-                break
-        
-        if not offering_id:
-            offering_id = "1"
-        
-        # Create class element with all required attributes
-        class_element = create_element(classes_element, "class", 
-                                      id=class_id, 
-                                      classId=class_id,  # Duplicate ID as classId is expected
-                                      departmentClassId=class_id,  # Needed by solver
-                                      subjectId="1",
-                                      instructorId="1", # Default instructor reference
-                                      courseId=offering_id,  # Link to course
-                                      schedulingSubpartId=offering_id,  # Link to subpart
-                                      studentSchedulingEnabled="true",
-                                      isCommitted="false",
-                                      nrRooms="1",
-                                      timetable="false",
-                                      roomNames="",
-                                      externalId=class_data["id"],
-                                      managingDept="1",  # Link to department
-                                      classLimit=str(class_data.get("students", 30)),
-                                      snapshotLimit="0")
-        
-        # Add date pattern
-        date_pattern = create_element(class_element, "datePattern", 
-                                     id="1", 
-                                     name="Full Term", 
-                                     type="Standard", 
-                                     visible="true")
-        
-        # Add instructor if specified
-        if "instructor" in class_data:
-            instructor_id = instructor_id_mapping[class_data["instructor"]]
-            create_element(class_element, "instructor", id=instructor_id)
-        
-        # Add time preferences with direct time elements (required structure for solver)
-        time_prefs = create_element(class_element, "timePreferences")
-        
-        # Add proper time preferences structure
-        timePattern = create_element(time_prefs, "timePattern", 
-                                    name="Default", 
-                                    nrMeetings="3", 
-                                    minsPerMeeting="50",
-                                    type="Standard",
-                                    breakTime="0")  # Add explicit breakTime
-        
-        # Add preference entries with explicit values - use format expected by solver
-        # Create 24 hours x 7 days grid with all preferences set to 0
-        for day in range(7):
-            for hour in range(24):
-                slot = hour * 12  # 12 five-minute slots per hour
-                create_element(timePattern, "pref", 
-                             day=str(day), 
-                             slot=str(slot), 
-                             pref="0",
-                             prefLevel="0")  # Add explicit prefLevel
-        
-        # Add direct time elements to the class (required by solver)
-        # Monday, Wednesday, Friday slots
-        create_element(class_element, "time", 
-                      days="1010100",  # MWF
-                      start="90",      # 7:30am
-                      length="12",     # 60 minutes (12 5-minute slots)
-                      timePattern="1",
-                      datePatternId="1",
-                      breakTime="0",
-                      pref="0")  # Add explicit pref
-        
-        # Tuesday, Thursday slots
-        create_element(class_element, "time", 
-                      days="0101000",  # TTh
-                      start="90",      # 7:30am
-                      length="18",     # 90 minutes (18 5-minute slots)
-                      timePattern="2",
-                      datePatternId="1",
-                      breakTime="0",
-                      pref="0")  # Add explicit pref
-        
-        # Add room groups (required by solver)
-        roomGroups = create_element(class_element, "roomGroups")
-        create_element(roomGroups, "roomGroup", id="1", name="Default")
-        
-        # Add room preferences (required for solver)
-        room_prefs = create_element(class_element, "roomPreferences")
-        for room_data in json_data.get("rooms", []):
-            room_id = room_id_mapping[room_data["id"]]
-            # Use "0" as a valid string for preference (ensure it's not a null value)
-            create_element(room_prefs, "room", id=room_id, pref="0")
-    
-    # Add distributions section (constraints between classes)
-    distributions_element = create_element(root, "distributions")
-    
-    # Process mutually exclusive constraints
-    if "distribution_constraints" in json_data and "mutually_exclusive" in json_data["distribution_constraints"]:
-        for i, class_group in enumerate(json_data["distribution_constraints"]["mutually_exclusive"]):
-            distribution = create_element(distributions_element, "distribution", 
-                                         id=str(i+1), 
-                                         type="DIFF_TIME",
-                                         required="true",  
-                                         pref="1.0",
-                                         prefLevel="Required")  # Add explicit prefLevel
+        Args:
+            id_value: The ID value to check
             
-            for class_id in class_group:
-                numeric_id = class_id_mapping.get(class_id, "1")
-                create_element(distribution, "class", id=numeric_id)
-    
-    # Process back-to-back constraints
-    if "distribution_constraints" in json_data and "back_to_back" in json_data["distribution_constraints"]:
-        for i, class_group in enumerate(json_data["distribution_constraints"]["back_to_back"]):
-            distribution = create_element(distributions_element, "distribution", 
-                                         id=str(i+101), 
-                                         type="BTB_TIME",
-                                         required="true",
-                                         pref="1.0",
-                                         prefLevel="Required")  # Add explicit prefLevel
+        Returns:
+            A numeric ID value
+        """
+        # If already numeric, return as int
+        if isinstance(id_value, (int, float)) or (isinstance(id_value, str) and id_value.isdigit()):
+            return int(id_value)
             
-            for class_id in class_group:
-                numeric_id = class_id_mapping.get(class_id, "1")
-                create_element(distribution, "class", id=numeric_id)
+        # If string but not numeric, create a mapping
+        if isinstance(id_value, str):
+            if id_value not in self.id_mapping:
+                self.id_mapping[id_value] = self.next_numeric_id
+                self.next_numeric_id += 1
+            return self.id_mapping[id_value]
+            
+        # Default case
+        return self.next_numeric_id
+        
+    def convert(self) -> str:
+        """
+        Convert JSON data to XML format.
+        
+        Returns:
+            String containing the formatted XML
+        """
+        # Create root element
+        self.root = ET.Element("timetable")
+        
+        # Add root attributes from general section
+        general = self.json_data.get("general", {})
+        self.root.set("version", "2.4")
+        self.root.set("initiative", "puWestLafayetteTrdtn")  # Default value
+        self.root.set("term", general.get("academic_session", "2025Fal"))
+        self.root.set("year", str(general.get("year", 2025)))
+        self.root.set("created", datetime.datetime.now().strftime("%a %b %d %H:%M:%S  %Y"))
+        self.root.set("nrDays", "7")
+        self.root.set("slotsPerDay", "288")
+        
+        # Add comment
+        comment = ET.Comment(general.get("description", "University Course Timetabling"))
+        self.root.append(comment)
+        
+        # Process rooms
+        self._process_rooms()
+        
+        # Process classes
+        self._process_classes()
+        
+        # Process constraints (always include the groupConstraints element)
+        group_constraints_elem = ET.SubElement(self.root, "groupConstraints")
+        
+        # Add mutually exclusive constraints if available
+        mutually_exclusive = self.json_data.get("mutuallyExclusive", {})
+        if mutually_exclusive and mutually_exclusive.get("pairs", []):
+            self._add_mutually_exclusive_constraints(group_constraints_elem)
+        
+        # Convert to string with pretty formatting
+        rough_string = ET.tostring(self.root, 'utf-8')
+        reparsed = minidom.parseString(rough_string)
+        return reparsed.toprettyxml(indent="  ")
     
-    # Add students section
-    students_element = create_element(root, "students")
-    for i, student_data in enumerate(json_data.get("students", [])):
-        student_id = str(i+1)
-        student_element = create_element(students_element, "student", 
-                                        id=student_id, 
-                                        firstName=f"Student{student_id}",
-                                        lastName=f"User{student_id}",
-                                        externalId=student_data.get("id", f"S{student_id}"),
-                                        dummy="false",
-                                        priority="0.1",
-                                        minCredit="0",
-                                        maxCredit="20",
-                                        projectedCredit="0")
+    def _process_rooms(self):
+        """Process rooms data and add to XML"""
+        rooms_data = self.json_data.get("rooms", {})
+        if not rooms_data:
+            # Create at least one dummy room if no rooms are provided
+            rooms_elem = ET.SubElement(self.root, "rooms")
+            room_elem = ET.SubElement(rooms_elem, "room")
+            room_elem.set("id", "1")
+            room_elem.set("constraint", "true")
+            room_elem.set("capacity", "100")
+            room_elem.set("location", self.default_location)
+            return
+            
+        rooms_elem = ET.SubElement(self.root, "rooms")
         
-        # Add academic area to student (required by solver)
-        acad_area = create_element(student_element, "academicArea", id="1")
-        
-        # Add major to student (required by solver)
-        major = create_element(student_element, "major", id="1")
-        
-        # Add student group to student (required by solver)
-        group = create_element(student_element, "group", id="1")
-        
-        # Add class references for each student
-        for class_id in student_data.get("classes", []):
-            numeric_id = class_id_mapping.get(class_id, "1")
-            create_element(student_element, "class", id=numeric_id, weight="1.0")
+        # Skip the description field
+        for room_id, capacity in rooms_data.items():
+            if room_id == "description":
+                continue
+                
+            # Ensure numeric room ID
+            numeric_room_id = self.ensure_numeric_id(room_id)
+                
+            room_elem = ET.SubElement(rooms_elem, "room")
+            room_elem.set("id", str(numeric_room_id))
+            room_elem.set("constraint", "true")
+            room_elem.set("capacity", str(capacity))
+            room_elem.set("location", self.default_location)
     
-    # If no students in data, add one default student
-    if not json_data.get("students", []):
-        student_element = create_element(students_element, "student", 
-                                       id="1", 
-                                       firstName="Default",
-                                       lastName="Student",
-                                       externalId="S1",
-                                       dummy="false",
-                                       priority="0.1",
-                                       minCredit="0",
-                                       maxCredit="20",
-                                       projectedCredit="0")
+    def _convert_time_to_slots(self, time_str: str) -> Tuple[int, int]:
+        """
+        Convert time string (e.g., "7:45-9:15") to start slot and length.
         
-        # Add academic area to default student
-        acad_area = create_element(student_element, "academicArea", id="1")
+        Args:
+            time_str: Time range string in format "HH:MM-HH:MM"
+            
+        Returns:
+            Tuple of (start_slot, length_in_slots)
+        """
+        start_time, end_time = time_str.split('-')
         
-        # Add major to default student
-        major = create_element(student_element, "major", id="1")
+        # Parse start time
+        start_hour, start_min = map(int, start_time.split(':'))
+        start_minutes = start_hour * 60 + start_min
         
-        # Add student group to default student
-        group = create_element(student_element, "group", id="1")
+        # Parse end time
+        end_hour, end_min = map(int, end_time.split(':'))
+        end_minutes = end_hour * 60 + end_min
         
-        # Add all classes to default student
-        for class_id in class_id_mapping.values():
-            create_element(student_element, "class", id=class_id, weight="1.0")
+        # Calculate slots (assuming 5-minute slots)
+        start_slot = start_minutes // 5
+        length = (end_minutes - start_minutes) // 5
+        
+        return start_slot, length
     
-    # Add buildings section
-    buildings_element = create_element(root, "buildings")
-    create_element(buildings_element, "building", 
-                  id="1", 
-                  externalId="MAIN",
-                  name="Main Building",
-                  x="0", y="0")
+    def _get_day_pattern(self, day_index: int) -> str:
+        """
+        Generate a binary day pattern string for XML.
+        
+        Args:
+            day_index: Index of the day (0=Saturday, 1=Sunday, etc.)
+            
+        Returns:
+            Binary string representing the day pattern
+        """
+        pattern = ['0'] * 7
+        pattern[day_index] = '1'
+        return ''.join(pattern)
     
-    # Add solutions section
-    solutions_element = create_element(root, "solutions")
-    create_element(solutions_element, "solution", 
-                  id="1",
-                  commit="1", 
-                  update="1", 
-                  save="1")
+    def _get_preference_value(self, pref_code: int) -> float:
+        """
+        Convert preference code to preference value.
+        
+        Args:
+            pref_code: Preference code from JSON
+            
+        Returns:
+            Preference value for XML
+        """
+        # Use the preferences mapping from JSON if available
+        preferences = self.json_data.get("preferences", {})
+        
+        # Default mapping if not found
+        pref_map = {
+            -3: -100.0,  # required
+            -2: -20.0,   # strongly preferred
+            -1: -10.0,   # preferred
+            0: 0.0,      # neutral
+            1: 10.0,     # discouraged
+            2: 20.0,     # strongly discouraged
+            3: 100.0,    # prohibited
+            4: 1000.0    # not available
+        }
+        
+        return float(pref_map.get(pref_code, 0.0))
     
-    # Return the formatted XML string
-    return ET.tostring(root, encoding='utf-8')
+    def _process_classes(self):
+        """Process classes data and add to XML"""
+        classes_data = self.json_data.get("classes", {})
+        if not classes_data:
+            # Create at least one dummy class if no classes are provided
+            classes_elem = ET.SubElement(self.root, "classes")
+            class_elem = ET.SubElement(classes_elem, "class")
+            class_elem.set("id", "1")
+            class_elem.set("offering", "1")
+            class_elem.set("config", "1")
+            class_elem.set("committed", "false")
+            class_elem.set("subpart", "1")
+            class_elem.set("classLimit", "30")
+            class_elem.set("scheduler", "1")
+            class_elem.set("dates", "1" * 288)
+            return
+            
+        classes_elem = ET.SubElement(self.root, "classes")
+        
+        # Default dates pattern - all 1's for 288 days (full semester)
+        default_dates = "1" * 288
+        
+        # Skip the description field
+        scheduler_id = 1
+        for class_id, class_info in classes_data.items():
+            if class_id == "description":
+                continue
+                
+            # Ensure numeric class ID
+            numeric_class_id = self.ensure_numeric_id(class_id)
+                
+            class_elem = ET.SubElement(classes_elem, "class")
+            class_elem.set("id", str(numeric_class_id))
+            class_elem.set("offering", str(numeric_class_id))
+            class_elem.set("config", str(numeric_class_id))
+            class_elem.set("committed", "false")
+            class_elem.set("subpart", str(numeric_class_id))
+            class_elem.set("classLimit", str(class_info.get("capacity", 30)))
+            class_elem.set("scheduler", str(scheduler_id))
+            
+            # Add dates attribute (required)
+            class_elem.set("dates", default_dates)
+            
+            # Add instructor
+            teacher = class_info.get("teacher")
+            if teacher:
+                instructor_elem = ET.SubElement(class_elem, "instructor")
+                # Ensure numeric teacher ID
+                numeric_teacher_id = self.ensure_numeric_id(teacher)
+                instructor_elem.set("id", str(numeric_teacher_id))
+            else:
+                # Add a default instructor if none provided
+                instructor_elem = ET.SubElement(class_elem, "instructor")
+                instructor_elem.set("id", str(numeric_class_id + 1))
+            
+            # Add room preferences
+            self._add_room_preferences(class_elem)
+            
+            # Add time preferences based on teacher availability
+            self._add_time_preferences(class_elem, teacher, class_info.get("slots", 2))
+            
+            scheduler_id += 1
+    
+    def _add_room_preferences(self, class_elem: ET.Element):
+        """
+        Add room preferences to a class element.
+        
+        Args:
+            class_elem: The class XML element to add room preferences to
+        """
+        rooms_data = self.json_data.get("rooms", {})
+        ignore_capacity = self.json_data.get("constraints", {}).get("ignoreClassCapacity", {}).get("value", False)
+        
+        class_capacity = int(class_elem.get("classLimit", 0))
+        
+        # Ensure at least one room preference is added
+        room_added = False
+        
+        for room_id, capacity in rooms_data.items():
+            if room_id == "description":
+                continue
+                
+            # Skip rooms that are too small unless ignoreClassCapacity is true
+            if not ignore_capacity and int(capacity) < class_capacity:
+                continue
+                
+            # Ensure numeric room ID
+            numeric_room_id = self.ensure_numeric_id(room_id)
+                
+            room_elem = ET.SubElement(class_elem, "room")
+            room_elem.set("id", str(numeric_room_id))
+            room_elem.set("pref", "0")  # Neutral preference by default
+            room_added = True
+        
+        # If no rooms were added, add a default one
+        if not room_added:
+            first_room_id = next((self.ensure_numeric_id(room_id) for room_id in rooms_data.keys() if room_id != "description"), 1)
+            room_elem = ET.SubElement(class_elem, "room")
+            room_elem.set("id", str(first_room_id))
+            room_elem.set("pref", "0")
+    
+    def _add_time_preferences(self, class_elem: ET.Element, teacher: str, required_slots: int):
+        """
+        Add time preferences to a class element based on teacher availability.
+        
+        Args:
+            class_elem: The class XML element to add time preferences to
+            teacher: Teacher name
+            required_slots: Number of time slots required for this class
+        """
+        time_slots = self.json_data.get("timeSlots", {})
+        teacher_prefs = self.json_data.get("teachers", {}).get(teacher, {})
+        
+        # Get all days time slots
+        all_slots = time_slots.get("allDays", [])
+        
+        # If no time slots are provided, add some default ones
+        if not all_slots:
+            # Default time preferences - assuming 6 hours in a day (18 slots of 20 minutes each)
+            default_times = [
+                ("0100000", 93, 18),  # Monday morning
+                ("0100000", 111, 18), # Monday mid-morning
+                ("0100000", 129, 18), # Monday noon
+                ("0010000", 93, 18),  # Tuesday morning
+                ("0010000", 111, 18), # Tuesday mid-morning
+                ("0010000", 129, 18)  # Tuesday noon
+            ]
+            
+            # Add default times
+            for days, start, length in default_times:
+                time_elem = ET.SubElement(class_elem, "time")
+                time_elem.set("days", days)
+                time_elem.set("start", str(start))
+                time_elem.set("length", str(length))
+                time_elem.set("pref", "0.0")
+                time_elem.set("breakTime", "10")
+            
+            return
+        
+        # Flag to track if we've added at least one time preference
+        time_added = False
+        
+        # Process each day
+        for day_name, day_index in self.day_map.items():
+            # Get teacher preferences for this day
+            day_prefs = teacher_prefs.get(day_name, [0] * len(all_slots))
+            
+            # Process each time slot
+            for slot_index, time_str in enumerate(all_slots):
+                # Skip if we don't have preference data for this slot
+                if slot_index >= len(day_prefs):
+                    continue
+                    
+                pref_code = day_prefs[slot_index]
+                pref_value = self._get_preference_value(pref_code)
+                
+                # Skip not available time slots
+                if pref_code == 4:  # not available
+                    continue
+                
+                time_added = True
+                start_slot, length = self._convert_time_to_slots(time_str)
+                
+                time_elem = ET.SubElement(class_elem, "time")
+                time_elem.set("days", self._get_day_pattern(day_index))
+                time_elem.set("start", str(start_slot))
+                time_elem.set("length", str(length))
+                time_elem.set("pref", str(pref_value))
+                # Add breakTime attribute (required for some solvers)
+                time_elem.set("breakTime", "10")
+        
+        # If no time preferences were added, add some default ones
+        if not time_added:
+            # Default time preferences
+            default_times = [
+                ("0100000", 93, 18),  # Monday morning
+                ("0100000", 111, 18), # Monday mid-morning
+                ("0100000", 129, 18), # Monday noon
+                ("0010000", 93, 18),  # Tuesday morning
+                ("0010000", 111, 18), # Tuesday mid-morning
+                ("0010000", 129, 18)  # Tuesday noon
+            ]
+            
+            # Add default times
+            for days, start, length in default_times:
+                time_elem = ET.SubElement(class_elem, "time")
+                time_elem.set("days", days)
+                time_elem.set("start", str(start))
+                time_elem.set("length", str(length))
+                time_elem.set("pref", "0.0")
+                time_elem.set("breakTime", "10")
+    
+    def _add_mutually_exclusive_constraints(self, group_constraints_elem: ET.Element):
+        """
+        Add mutually exclusive class constraints to the group constraints element.
+        
+        Args:
+            group_constraints_elem: The group constraints XML element
+        """
+        mutually_exclusive = self.json_data.get("mutuallyExclusive", {})
+        pairs = mutually_exclusive.get("pairs", [])
+        
+        for pair in pairs:
+            if len(pair) != 2:
+                continue
+                
+            # Ensure numeric class IDs
+            numeric_class_id1 = self.ensure_numeric_id(pair[0])
+            numeric_class_id2 = self.ensure_numeric_id(pair[1])
+            
+            # Create DIFF_TIME constraint
+            constraint_elem = ET.SubElement(group_constraints_elem, "constraint")
+            constraint_elem.set("id", str(self.constraint_id_counter))
+            constraint_elem.set("type", "DIFF_TIME")
+            constraint_elem.set("pref", "R")  # Required
+            
+            # Add classes to constraint
+            class_elem1 = ET.SubElement(constraint_elem, "class")
+            class_elem1.set("id", str(numeric_class_id1))
+            
+            class_elem2 = ET.SubElement(constraint_elem, "class")
+            class_elem2.set("id", str(numeric_class_id2))
+            
+            self.constraint_id_counter += 1
 
-def prettify_xml(xml_string):
-    """Format XML string to be more readable."""
-    dom = minidom.parseString(xml_string)
-    return dom.toprettyxml(indent="  ")
 
 def main():
-    """Main function to handle command-line arguments."""
-    parser = argparse.ArgumentParser(description='Convert JSON timetabling data to XML format.')
-    parser.add_argument('input_file', help='Input JSON file')
-    parser.add_argument('output_file', help='Output XML file')
+    """Main function to parse arguments and run the converter"""
+    parser = argparse.ArgumentParser(description='Convert JSON timetabling data to XML format')
+    parser.add_argument('input_file', help='Input JSON file path')
+    parser.add_argument('-o', '--output', help='Output XML file path (default: stdout)')
     
     args = parser.parse_args()
     
     try:
-        # Read JSON data
+        # Read JSON input
         with open(args.input_file, 'r') as f:
             json_data = json.load(f)
         
         # Convert to XML
-        xml_data = convert_json_to_xml(json_data)
+        converter = JSONtoXMLConverter(json_data)
+        xml_output = converter.convert()
         
-        # Format XML
-        pretty_xml = prettify_xml(xml_data)
-        
-        # Write to output file
-        with open(args.output_file, 'w') as f:
-            f.write(pretty_xml)
-        
-        print(f"Successfully converted {args.input_file} to {args.output_file}")
-        
+        # Write output
+        if args.output:
+            with open(args.output, 'w') as f:
+                f.write(xml_output)
+        else:
+            print(xml_output)
+            
+        return 0
+    
     except Exception as e:
-        print(f"Error: {e}")
-        sys.exit(1)
+        print(f"Error: {e}", file=sys.stderr)
+        return 1
+
 
 if __name__ == "__main__":
-    main()
+    sys.exit(main())

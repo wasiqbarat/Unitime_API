@@ -11,12 +11,70 @@ These models enable type safety and data validation throughout the application.
 """
 
 # Import standard library modules
-# from typing import List, Dict, Optional, Any, Union
-# from enum import Enum
-# from datetime import datetime
+from typing import Dict, Any, Optional, List
+from enum import Enum
+from datetime import datetime
 
 # Import Pydantic for data validation
-# from pydantic import BaseModel, Field, validator
+from pydantic import BaseModel, Field
+
+class SolverStatus(str, Enum):
+    """Enum for solver statuses"""
+    NOT_STARTED = "not_started"
+    STARTED = "started"
+    RUNNING = "running"
+    COMPLETED = "completed"
+    ERROR = "error"
+    STOPPED = "stopped"
+    KILLED = "killed"
+    NOT_RUNNING = "not_running"
+
+class ProblemSubmission(BaseModel):
+    """Model for submitting a new timetabling problem"""
+    general: Dict[str, Any] = Field(..., description="General information about the problem")
+    constraints: Optional[Dict[str, Any]] = Field(None, description="Constraints for scheduling")
+    timeSlots: Optional[Dict[str, Any]] = Field(None, description="Available time slots")
+    preferences: Optional[Dict[str, Any]] = Field(None, description="Preferences for scheduling")
+    rooms: Dict[str, Any] = Field(..., description="Available rooms with capacities")
+    classes: Dict[str, Any] = Field(..., description="Classes to be scheduled")
+    mutuallyExclusive: Optional[Dict[str, Any]] = Field(None, description="Classes that cannot be scheduled together")
+    instructors: Optional[Dict[str, Any]] = Field(None, description="Instructor availability and preferences")
+    name: Optional[str] = Field(None, description="Optional name for the problem")
+    
+    class Config:
+        extra = "allow"  # Allow additional fields
+
+class ProblemResponse(BaseModel):
+    """Response model for problem submission"""
+    problem_id: str = Field(..., description="Unique ID for the submitted problem")
+    status: SolverStatus = Field(..., description="Current status of the solver")
+    message: str = Field(..., description="Additional information about the problem submission")
+
+class StatusRequest(BaseModel):
+    """Request model for checking problem status"""
+    problem_id: str = Field(..., description="ID of the problem to check")
+
+class StatusResponse(BaseModel):
+    """Response model for problem status"""
+    problem_id: str = Field(..., description="ID of the checked problem")
+    status: SolverStatus = Field(..., description="Current status of the solver")
+    message: str = Field(..., description="Additional information about the problem status")
+    solution_available: bool = Field(..., description="Whether a solution is available")
+    debug_log: Optional[List[str]] = Field(None, description="Contents of the debug.log file as lines if available")
+    
+    class Config:
+        """Configuration for the StatusResponse model"""
+        json_encoders = {
+            # Customize JSON encoding for certain types if needed
+        }
+        
+        # This ensures that strings are not modified during serialization
+        arbitrary_types_allowed = True
+
+class XMLProblemSubmission(BaseModel):
+    """Model for submitting a new timetabling problem directly as XML"""
+    xml_content: str = Field(..., description="XML representation of the timetabling problem")
+    name: Optional[str] = Field(None, description="Optional name for the problem")
 
 # TODO: Define solver request models
 

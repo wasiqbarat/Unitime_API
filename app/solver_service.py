@@ -538,6 +538,8 @@ class SolverService:
             Dict containing the status information
         """
         debug_log_content = None
+        has_error = False
+        error_message = ""
         
         # Try to read the debug.log file if it exists
         problem_dir = os.path.join(self.cpsolver_path, "solved_output", problem_id)
@@ -547,6 +549,14 @@ class SolverService:
                 with open(debug_log_path, 'r', encoding='utf-8', newline='') as f:
                     # Split the log into lines and preserve each line
                     debug_log_content = f.read().splitlines()
+                    
+                # Check for error messages in the debug log
+                for line in debug_log_content:
+                    if "ERROR" in line or "Exception" in line or "error" in line.lower():
+                        has_error = True
+                        error_message = line
+                        break
+                        
                 self.logger.info(f"Read debug.log for problem {problem_id}")
             except Exception as e:
                 self.logger.warning(f"Error reading debug.log for problem {problem_id}: {str(e)}")
@@ -566,12 +576,22 @@ class SolverService:
             
             # Check if a solution.xml file exists
             solution_file = os.path.join(problem_dir, "solution.xml")
-            if os.path.exists(solution_file):
+            solution_available = os.path.exists(solution_file)
+            
+            if solution_available:
                 return {
                     "status": "completed",
                     "message": "Problem has been solved",
                     "problem_id": problem_id,
                     "solution_available": True,
+                    "debug_log": debug_log_content
+                }
+            elif has_error:
+                return {
+                    "status": "error",
+                    "message": f"Solver encountered an error: {error_message}",
+                    "problem_id": problem_id,
+                    "solution_available": False,
                     "debug_log": debug_log_content
                 }
             else:
@@ -600,7 +620,7 @@ class SolverService:
                 "debug_log": debug_log_content
             }
         else:
-            if "exit_code" in process_info and process_info["exit_code"] == 0:
+            if "exit_code" in process_info and process_info["exit_code"] == 0 and not has_error:
                 return {
                     "status": "completed",
                     "message": "Solver completed successfully",
@@ -608,10 +628,11 @@ class SolverService:
                     "solution_available": solution_available,
                     "debug_log": debug_log_content
                 }
-            elif "error" in process_info:
+            elif has_error or ("error" in process_info) or ("exit_code" in process_info and process_info["exit_code"] != 0):
+                error_msg = process_info.get("error", error_message if has_error else f"Exit code: {process_info.get('exit_code', 'unknown')}")
                 return {
                     "status": "error",
-                    "message": f"Solver encountered an error: {process_info['error']}",
+                    "message": f"Solver encountered an error: {error_msg}",
                     "problem_id": problem_id,
                     "solution_available": solution_available,
                     "debug_log": debug_log_content

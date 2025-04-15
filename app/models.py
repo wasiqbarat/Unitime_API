@@ -19,15 +19,15 @@ from datetime import datetime
 from pydantic import BaseModel, Field
 
 class SolverStatus(str, Enum):
-    """Enum for solver statuses"""
-    NOT_STARTED = "not_started"
-    STARTED = "started"
-    RUNNING = "running"
-    COMPLETED = "completed"
-    ERROR = "error"
-    STOPPED = "stopped"
-    KILLED = "killed"
-    NOT_RUNNING = "not_running"
+    """Enum for the status of the solver process."""
+    not_started = "not_started"
+    started = "started"
+    running = "running"
+    completed = "completed"
+    error = "error"  # Make sure error status is included
+    stopped = "stopped"
+    killed = "killed"
+    not_running = "not_running"
 
 class ProblemSubmission(BaseModel):
     """Model for submitting a new timetabling problem"""

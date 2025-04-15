@@ -168,10 +168,12 @@ async def get_problem(
     """
     result = solver_service.get_problem_status(problem_id)
     
-    if result["status"] == "error":
+    # Only raise HTTP exception if the problem is not found
+    if result["status"] == "error" and "not found" in result["message"]:
         logger.error(f"Problem status check error: {result['message']}")
         raise HTTPException(status_code=404, detail=result["message"])
     
+    # For other error types, we still want to return the complete response
     # Ensure debug_log preserves formatting if it exists
     debug_log = result.get("debug_log")
     

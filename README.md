@@ -1,147 +1,157 @@
-# Unitime Solver API
+# Unitime Solver API wrapper
 
-A REST API wrapper around the [CPSolver](https://github.com/UniTime/cpsolver) library for university timetabling and scheduling.
+[![Python](https://img.shields.io/badge/python-3.11-blue.svg)](https://www.python.org/downloads/release/python-311/)
+[![FastAPI](https://img.shields.io/badge/FastAPI-0.104.0-green.svg)](https://fastapi.tiangolo.com)
+[![Docker](https://img.shields.io/badge/docker-compatible-brightgreen.svg)](https://www.docker.com/)
+[![License](https://img.shields.io/badge/license-MIT-blue.svg)](LICENSE)
 
-## Overview
+A REST API service that wraps the [CPSolver](https://github.com/UniTime/cpsolver) library for university timetabling and scheduling problems.
 
-Unitime Solver API provides a modern REST interface to the powerful CPSolver Java library, enabling easy integration of timetabling functionality into web applications and other services. It handles course scheduling, room assignment, and timetable optimization for educational institutions.
+## 📋 Table of Contents
+- [Features](#-features)
+- [Requirements](#-requirements)
+- [Quick Start](#-quick-start)
+- [Installation](#-installation)
+  - [Local Installation](#local-installation)
+  - [Docker Installation](#docker-installation)
+  - [Key Endpoints](#key-endpoints)
+- [Docker Deployment](#-docker-deployment)
+  - [Volume Management](#volume-management)
+- [Contributing](#-contributing)
+- [License](#-license)
+- [Acknowledgments](#acknowledgments)
 
-## Features
+## ✨ Features
 
-- REST API for university timetabling operations
-- Seamless integration with the CPSolver library
-- Input validation and error handling
-- Asynchronous solution processing
-- Solution persistence and retrieval
+- **RESTful API Interface**: Modern REST endpoints for all timetabling operations
+- **Multiple Input Formats**: Support for both JSON and XML input formats
+- **Asynchronous Processing**: Non-blocking solution computation
+- **Real-time Status Updates**: Track solver progress in real-time
+- **Persistence**: Solution storage and retrieval capabilities
+- **Docker Support**: Containerized deployment ready
+- **Comprehensive Documentation**: Auto-generated API documentation
 
-## Prerequisites
+## 🔧 Requirements
 
-- Python 3.8+
-- Java Runtime Environment (JRE)
-- CPSolver library and its dependencies
+- Python 3.11+
+- Java Runtime Environment (JRE) 17+
+- Docker (optional, for containerized deployment)
+- CPSolver library
 
-## Installation
+## 🚀 Quick Start
 
-1. Clone this repository:
+The fastest way to get started is using Docker:
+
+```bash
+# Clone the repository
+git clone https://github.com/yourusername/unitime-api.git
+cd unitime-api
+
+# Start the service
+docker-compose up -d
+
+# The API will be available at http://localhost:8000
+# API documentation at http://localhost:8000/docs
+```
+
+## 📥 Installation
+
+### Local Installation
+
+1. Clone the repository:
 ```bash
 git clone https://github.com/yourusername/unitime-api.git
 cd unitime-api
 ```
 
-2. Install required Python packages:
+2. Create and activate virtual environment:
+```bash
+python -m venv venv
+source venv/bin/activate  # On Windows: venv\Scripts\activate
+```
+
+3. Install dependencies:
 ```bash
 pip install -r requirements.txt
 ```
 
-3. Ensure the CPSolver directory is available in one of the following locations:
-   - `./cpsolver`
-   - `../cpsolver`
-   - Or set the `SOLVER_PATH` environment variable to the CPSolver directory
-
-## Setup
-
-Run the setup script to verify your installation:
-
+4. Set up CPSolver:
 ```bash
 python setup_cpsolver.py
 ```
 
-The script will check for:
-- CPSolver directory presence
-- Required JAR files
-- Java installation
-- Create necessary output directories
+### Docker Installation
 
-## Running the API
-
-Start the API server with:
+Build and run using Docker:
 
 ```bash
-uvicorn app.main:app --host 0.0.0.0 --port 8000 --reload
+# Build the image
+docker build -t unitime-solver-api .
+
+# Run the container
+docker run -p 8000:8000 -v /path/to/cpsolver:/app/cpsolver unitime-solver-api
 ```
 
-The API will be available at `http://localhost:8000`.
+### Key Endpoints
 
-## API Endpoints
-
-### General Endpoints
-- `GET /` - Health check endpoint
-
-### Legacy Solver Control
-- `POST /solver/start` - Start the test solver
-- `GET /solver/status` - Get solver status 
-- `POST /solver/stop` - Stop the solver
-
-### Problem Management Endpoints
-- `POST /problems` - Submit a problem in JSON format
-- `POST /problems/xml` - Submit a problem in XML format
-- `GET /problems/{problem_id}` - Get problem status
-- `DELETE /problems/{problem_id}` - Cancel a problem solver process
-- `GET /problems/{problem_id}/solution` - Get problem solution in JSON format
-- `GET /problems/{problem_id}/solution/xml` - Get problem solution in XML format
-
-### Solution Retrieval
-
-The API provides two formats for retrieving solutions:
-
-#### JSON Format
-```
-GET /problems/{problem_id}/solution
+#### Health Check
+```http
+GET /
 ```
 
-Returns a structured JSON representation of the solution, with:
-- Solution metadata (solver, version, runtime)
-- Statistics from the solver
-- Class assignments with:
-  - Time slots in human-readable format (e.g., "9:30 AM")
-  - Room assignments
-  - Day information
-
-#### XML Format
-```
-GET /problems/{problem_id}/solution/xml
+#### Solver Control
+```http
+POST /solver/start
+GET /solver/status
+POST /solver/stop
 ```
 
-Returns the raw XML solution as generated by the CPSolver, useful for:
-- Systems that need the original format
-- Debugging solver output
-- Integration with UniTime components
+#### Problem Management
+```http
+POST /problems          # Submit problem (JSON)
+POST /problems/xml      # Submit problem (XML)
+GET /problems/{id}      # Get status
+DELETE /problems/{id}   # Cancel solver
+```
 
-## API Documentation
+#### Solution Retrieval
+```http
+GET /problems/{id}/solution      # Get JSON solution
+GET /problems/{id}/solution/xml  # Get XML solution
+```
 
-Once running, access the auto-generated API documentation at:
-- Swagger UI: `http://localhost:8000/docs`
-- ReDoc: `http://localhost:8000/redoc`
+## 🐳 Docker Deployment
 
-## Environment Variables
-
-- `SOLVER_PATH`: Path to the CPSolver directory (optional)
-- `LOG_LEVEL`: Set logging level (default: INFO)
-
-## Docker Support
-
-A Dockerfile is provided for containerized deployment:
+The project includes both Dockerfile and docker-compose.yml for easy deployment:
 
 ```bash
-docker build -t unitime-api .
-docker run -p 8000:8000 -v /path/to/cpsolver:/app/cpsolver unitime-api
+# Using docker-compose (recommended)
+docker-compose up -d
+
+# Scale if needed
+docker-compose up -d --scale api=3
 ```
 
-## Contributing
+### Volume Management
+- CPSolver data is persisted using named volumes
+- Configuration can be mounted using Docker volumes
+- Logs are available through Docker logging
 
-Contributions are welcome! Please feel free to submit a Pull Request.
+## 👥 Contributing
+
+Contributions are welcome! Please feel free to submit a Pull Request. For major changes:
 
 1. Fork the repository
-2. Create your feature branch (`git checkout -b feature/amazing-feature`)
-3. Commit your changes (`git commit -m 'Add some amazing feature'`)
-4. Push to the branch (`git push origin feature/amazing-feature`)
+2. Create your feature branch (`git checkout -b feature/AmazingFeature`)
+3. Commit your changes (`git commit -m 'Add some AmazingFeature'`)
+4. Push to the branch (`git push origin feature/AmazingFeature`)
 5. Open a Pull Request
 
-## License
+## 📄 License
 
-This project is licensed under the [MIT License](LICENSE) - see the LICENSE file for details.
+This project is licensed under the MIT License
 
 ## Acknowledgments
 
 - [CPSolver](https://github.com/UniTime/cpsolver) - The core timetabling solver
-- [FastAPI](https://fastapi.tiangolo.com/) - The web framework used 
+- [FastAPI](https://fastapi.tiangolo.com/) - The web framework used

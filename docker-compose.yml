@@ -1,13 +1,16 @@
-version: '1.0'
+version: '3.8'
 
 services:
   api:
-    build: .
+    build: 
+      context: .
+      dockerfile: Dockerfile
+    image: unitime-solver-api
     ports:
       - "8000:8000"
     volumes:
       - ./app:/app/app
-      - ./cpsolver:/app/cpsolver
+      - ./cpsolver:/app/cpsolver  # Mount local cpsolver directory
     environment:
       - ENVIRONMENT=development
       - LOG_LEVEL=info
@@ -25,5 +28,9 @@ services:
   #   ports:
   #     - "5432:5432"
       
-# volumes:
-#   postgres_data:
+volumes:
+  postgres_data:
+  # cpsolver_data:
+  #   name: unitime_cpsolver_data
+  # postgres_data:
+  #   name: unitime_postgres_data

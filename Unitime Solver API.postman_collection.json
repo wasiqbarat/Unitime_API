@@ -1,0 +1,149 @@
+{
+  "info": {
+    "name": "Unitime Solver API",
+    "description": "Collection for testing the Unitime course timetabling solver API",
+    "schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json"
+  },
+  "item": [
+    {
+      "name": "Health Check",
+      "request": {
+        "method": "GET",
+        "url": "http://localhost:8000/",
+        "description": "Simple health check to verify the API is running"
+      },
+      "response": []
+    },
+    {
+      "name": "Solver Operations",
+      "item": [
+        {
+          "name": "Start Solver",
+          "request": {
+            "method": "POST",
+            "url": "http://localhost:8000/solver/start",
+            "description": "Start the test solver with predefined configuration and data files"
+          },
+          "response": []
+        },
+        {
+          "name": "Get Solver Status",
+          "request": {
+            "method": "GET",
+            "url": "http://localhost:8000/solver/status",
+            "description": "Check if the solver is running"
+          },
+          "response": []
+        },
+        {
+          "name": "Stop Solver",
+          "request": {
+            "method": "POST",
+            "url": "http://localhost:8000/solver/stop",
+            "description": "Stop the currently running solver process"
+          },
+          "response": []
+        }
+      ]
+    },
+    {
+      "name": "Problem Management",
+      "item": [
+        {
+          "name": "Submit Problem (JSON)",
+          "request": {
+            "method": "POST",
+            "url": "http://localhost:8000/problems",
+            "description": "Submit a new timetabling problem in JSON format",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"name\": \"Test Problem\",\n  \"general\": {\n    \"name\": \"Test Timetable\",\n    \"nrDays\": 5,\n    \"nrWeeks\": 1,\n    \"slotsPerDay\": 288\n  },\n  \"rooms\": {\n    \"1\": 50,\n    \"2\": 30,\n    \"3\": 20\n  },\n  \"classes\": {\n    \"1\": {\n      \"name\": \"Class 1\",\n      \"students\": 30,\n      \"duration\": 24\n    },\n    \"2\": {\n      \"name\": \"Class 2\",\n      \"students\": 20,\n      \"duration\": 24\n    }\n  }\n}"
+            }
+          },
+          "response": []
+        },
+        {
+          "name": "Submit Problem (XML)",
+          "request": {
+            "method": "POST",
+            "url": "http://localhost:8000/problems/xml",
+            "description": "Submit a new timetabling problem directly in XML format",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/xml"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "<?xml version=\"1.0\" encoding=\"UTF-8\"?>\n<timetable name=\"Test Timetable\" nrDays=\"5\" slotsPerDay=\"288\" nrWeeks=\"1\">\n    <rooms>\n        <room id=\"1\" capacity=\"50\"/>\n        <room id=\"2\" capacity=\"30\"/>\n        <room id=\"3\" capacity=\"20\"/>\n    </rooms>\n    <offerings>\n        <offering id=\"1\" name=\"Offering 1\">\n            <config id=\"1\">\n                <subpart id=\"1\" name=\"Lec\">\n                    <class id=\"1\" name=\"Class 1\" limit=\"30\" duration=\"24\"/>\n                </subpart>\n            </config>\n        </offering>\n        <offering id=\"2\" name=\"Offering 2\">\n            <config id=\"2\">\n                <subpart id=\"2\" name=\"Lec\">\n                    <class id=\"2\" name=\"Class 2\" limit=\"20\" duration=\"24\"/>\n                </subpart>\n            </config>\n        </offering>\n    </offerings>\n</timetable>"
+            }
+          },
+          "response": []
+        },
+        {
+          "name": "Get Problem Status",
+          "request": {
+            "method": "GET",
+            "url": "http://localhost:8000/problems/{{problem_id}}",
+            "description": "Check the status of a specific problem and get debug log if available"
+          },
+          "response": []
+        },
+        {
+          "name": "Cancel Problem",
+          "request": {
+            "method": "DELETE",
+            "url": "http://localhost:8000/problems/{{problem_id}}",
+            "description": "Cancel a running problem solver process"
+          },
+          "response": []
+        },
+        {
+          "name": "Get Solution (JSON)",
+          "request": {
+            "method": "GET",
+            "url": "http://localhost:8000/problems/{{problem_id}}/solution",
+            "description": "Get the solution for a specific problem in JSON format",
+            "header": [
+              {
+                "key": "Accept",
+                "value": "application/json"
+              }
+            ]
+          },
+          "response": []
+        },
+        {
+          "name": "Get Solution (XML)",
+          "request": {
+            "method": "GET",
+            "url": "http://localhost:8000/problems/{{problem_id}}/solution/xml",
+            "description": "Get the solution for a specific problem in XML format",
+            "header": [
+              {
+                "key": "Accept",
+                "value": "application/xml"
+              }
+            ]
+          },
+          "response": []
+        }
+      ]
+    }
+  ],
+  "variable": [
+    {
+      "key": "problem_id",
+      "value": "YOUR_PROBLEM_ID",
+      "description": "ID of the problem to check status, cancel, or get solution"
+    }
+  ]
+}
+ 

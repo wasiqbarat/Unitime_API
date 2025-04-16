@@ -76,6 +76,38 @@ class XMLProblemSubmission(BaseModel):
     xml_content: str = Field(..., description="XML representation of the timetabling problem")
     name: Optional[str] = Field(None, description="Optional name for the problem")
 
+class SolutionInfo(BaseModel):
+    """Information about the solution"""
+    solver: str = Field("", description="Name of the solver used")
+    version: str = Field("", description="Version of the solver")
+    created: str = Field("", description="Timestamp when the solution was created")
+    runtime: str = Field("", description="Runtime of the solver")
+    statistics: Optional[Dict[str, str]] = Field(None, description="Statistics about the solution process")
+
+class TimeAssignment(BaseModel):
+    """Time assignment for a class"""
+    days: List[str] = Field(..., description="Days of the week")
+    start: str = Field(..., description="Start time")
+    end: str = Field(..., description="End time")
+
+class RoomAssignment(BaseModel):
+    """Room assignment for a class"""
+    id: str = Field(..., description="Room ID")
+    name: str = Field("", description="Room name")
+
+class ClassAssignment(BaseModel):
+    """Assignment details for a class"""
+    id: str = Field(..., description="Class ID")
+    assignment: Dict[str, Any] = Field(..., description="Assignment details including time and rooms")
+
+class SolutionResponse(BaseModel):
+    """Response model for solution retrieval"""
+    solution: Dict[str, Any] = Field(..., description="Solution data")
+    
+    class Config:
+        """Configuration for the SolutionResponse model"""
+        arbitrary_types_allowed = True
+
 # TODO: Define solver request models
 
 # TODO: Define solver response models

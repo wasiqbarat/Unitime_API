@@ -20,7 +20,11 @@ A REST API service that wraps the [CPSolver](https://github.com/UniTime/cpsolver
 - [Contributing](#-contributing)
 - [License](#-license)
 - [Acknowledgments](#acknowledgments)
+---
+## Architecture Diagram
+![mermaid-diagram-2025-04-19-160603](https://github.com/user-attachments/assets/e36f00d3-cc50-49b5-a846-ae604a61a293)
 
+---
 ## ✨ Features
 
 - **RESTful API Interface**: Modern REST endpoints for all timetabling operations
